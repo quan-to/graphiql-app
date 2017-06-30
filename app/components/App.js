@@ -293,13 +293,14 @@ export default class App extends React.Component {
                 </select>
               </div>
             </div>
-          </div>
-          <div className="config-form clearfix">
-            <div className="field endpoint-box">
-              <label htmlFor="gpgkey">GPG Key</label>
-              <select name="gpgkey" value={currentTab.gpgkey} onChange={this.handleChange.bind(this, 'gpgkey')}>
-                {keyList}
-              </select>
+            <br/>
+            <div className="pure-control-group">
+              <div className="field endpoint-box">
+                <label htmlFor="gpgkey">GPG Key</label>
+                <select name="gpgkey" value={currentTab.gpgkey} onChange={this.handleChange.bind(this, 'gpgkey')}>
+                  {keyList}
+                </select>
+              </div>
             </div>
           </div>
         </form>
