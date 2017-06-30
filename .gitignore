@@ -37,3 +37,8 @@ release
 
 # IDEA
 .idea
+
+dist
+
+.envrc
+
