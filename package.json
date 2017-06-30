@@ -26,12 +26,14 @@
     "url": "http://github.com/skevy/graphiql-app.git"
   },
   "dependencies": {
+    "child-process-promise": "^2.2.1",
     "graphiql": "^0.8.1",
     "graphql": "^0.8.2",
     "isomorphic-fetch": "^2.1.1",
     "lodash": "^3.10.1",
     "mousetrap": "^1.5.3",
     "object-assign": "^4.0.1",
+    "openpgp": "git+https://github.com/racerxdl/openpgpjs.git",
     "radium": "^0.14.1",
     "react": "^15.1.0",
     "react-dom": "^15.1.0",

@@ -11,6 +11,7 @@ Modal.setAppElement(document.getElementById('react-root'));
 
 import HTTPHeaderEditor from './HTTPHeaderEditor';
 
+import signer from './signer';
 
 export default class App extends React.Component {
   constructor() {
@@ -149,7 +150,7 @@ export default class App extends React.Component {
     window.localStorage.setItem('currentTabIndex', this.state.currentTabIndex);
   }
 
-  graphQLFetcher = (graphQLParams) => {
+  graphQLFetcher = async (graphQLParams) => {
     const defaultHeaders = {
       'Content-Type': 'application/json'
     };
@@ -171,6 +172,14 @@ export default class App extends React.Component {
         body: null
       }).then(response => response.json());
     }
+
+    // Signing
+    const signatureData = await signer(graphQLParams.query);
+
+    defaultHeaders.signature = [
+      `${signatureData.fingerPrint}$${signatureData.signature}`,
+    ];
+
     return fetch(endpoint, {
       method: method,
       credentials: 'include',
