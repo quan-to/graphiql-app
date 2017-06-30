@@ -11,7 +11,7 @@ Modal.setAppElement(document.getElementById('react-root'));
 
 import HTTPHeaderEditor from './HTTPHeaderEditor';
 
-import signer from './signer';
+import { sign, getAvailableKeys } from './signer';
 
 export default class App extends React.Component {
   constructor() {
@@ -29,11 +29,17 @@ export default class App extends React.Component {
           endpoint: '',
           method: 'post'
         }
-      ]
+      ],
+      gpgkeys: []
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
+    const keys = await getAvailableKeys();
+    this.setState({
+      gpgkeys: keys,
+    });
+
     Mousetrap.bindGlobal('command+shift+]', (e) => {
       e.preventDefault();
       this.gotoNextTab();
@@ -104,7 +110,8 @@ export default class App extends React.Component {
           uuid: uuid.v1(),
           headers: {},
           endpoint: '',
-          method: 'post'
+          method: 'post',
+          gpgkey: ''
         }
       ];
     }
@@ -154,8 +161,7 @@ export default class App extends React.Component {
     const defaultHeaders = {
       'Content-Type': 'application/json'
     };
-
-    const { endpoint, method, headers } = this.getCurrentTab();
+    const { endpoint, method, headers, gpgkey } = this.getCurrentTab();
 
     if (method == "get") {
       var url = endpoint;
@@ -174,11 +180,13 @@ export default class App extends React.Component {
     }
 
     // Signing
-    const signatureData = await signer(graphQLParams.query);
+    if (gpgkey !== 'none') {
+      const signatureData = await sign(graphQLParams.query, gpgkey);
 
-    defaultHeaders.signature = [
-      `${signatureData.fingerPrint}$${signatureData.signature}`,
-    ];
+      defaultHeaders.signature = [
+        `${signatureData.fingerPrint}$${signatureData.hash}$${signatureData.signature}`,
+      ];
+    }
 
     return fetch(endpoint, {
       method: method,
@@ -257,6 +265,14 @@ export default class App extends React.Component {
   render() {
     const currentTab = this.getCurrentTab();
 
+    const keyList = this.state.gpgkeys.map(
+      (k) => {
+        return (<option value={k.fingerPrint}>{k.name} ({k.fingerPrint})</option>)
+      }
+    );
+
+    keyList.push((<option value="none">None</option>));
+
     const { currentTabIndex } = this.state;
     const tabEl = (
       <div key={currentTabIndex} className="tabs__tab">
@@ -275,6 +291,14 @@ export default class App extends React.Component {
           </div>
           <div className="field headers">
             <a href="javascript:;" onClick={this.openHeaderEdit}>Edit HTTP Headers</a>
+          </div>
+        </div>
+        <div className="config-form clearfix">
+          <div className="field endpoint-box">
+            <label htmlFor="gpgkey">GPG Key</label>
+            <select name="gpgkey" value={currentTab.gpgkey} onChange={this.handleChange.bind(this, 'gpgkey')}>
+              {keyList}
+            </select>
           </div>
         </div>
         <div className="graphiql-wrapper">

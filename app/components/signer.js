@@ -8,12 +8,14 @@ const exec = require('child_process').exec;
 const keyToSign = '870AFA59';
 
 const reg = /-----BEGIN PGP SIGNATURE-----([^]*)-----END PGP SIGNATURE-----/;
+const hashReg = /Hash: (.*)/;
 
-async function getFingerPrint() {
+async function getFingerPrint(gpgKey) {
+  const k = gpgKey === undefined || gpgKey === null ? keyToSign : gpgKey;
   return new Promise((resolve, reject) => {
-    const child = exec(`gpg --list-keys --with-colons --fingerprint ${keyToSign} |grep pub`, (error, stdout, stderr) => {
+    const child = exec(`gpg --list-keys --with-colons --fingerprint ${k} |grep pub`, (error, stdout, stderr) => {
       if (error) {
-        console.log(`Error signign data (${error}): ${stderr}`);
+        console.log(`Error getting fingerprint (${error}): ${stderr}`);
         reject(error);
       } else {
         const s = stdout.split(':');
@@ -27,15 +29,16 @@ async function getFingerPrint() {
   })
 }
 
-export default async function (body) {
-  const fingerPrint = await getFingerPrint();
+async function _sign(body, gpgKey) {
+  const fingerPrint = await getFingerPrint(gpgKey);
   return new Promise((resolve, reject) => {
-    const child = exec(`gpg -u ${keyToSign} --clearsign`, (error, stdout, stderr) => {
+    const child = exec(`gpg -u ${fingerPrint} --clearsign`, (error, stdout, stderr) => {
       if (error) {
         console.log(`Error signign data (${error}): ${stderr}`);
         reject(error);
       } else {
         // Grab only the signature hash
+        const hash = stdout.match(hashReg);
         const rm = stdout.match(reg);
         if (rm.length === 2) {
           const z = rm[1].trim().split('\n');
@@ -47,12 +50,13 @@ export default async function (body) {
                 save = true;
               }
             } else {
-             signature += l;
+              signature += l;
             }
           });
           resolve({
             signature,
             fingerPrint,
+            hash: hash[1],
           });
         } else {
           reject('cannot find signature on stdout');
@@ -64,4 +68,36 @@ export default async function (body) {
     child.stdin.write(body);
     child.stdin.end();
   });
+}
+
+async function _getAvailableKeys() {
+  return new Promise((resolve, reject) => {
+    const child = exec('gpg --list-secret-keys  --with-colon |grep sec', (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error getting list of keys (${error}): ${stderr}`);
+        reject(error);
+      } else {
+        const keysS = stdout.trim().split('\n');
+        const keys = [];
+        keysS.forEach((k) => {
+          const s = k.split(':');
+          if (s.length > 9) {
+            keys.push({
+              fingerPrint: s[4],
+              name: s[9],
+            })
+          }
+        });
+        resolve(keys);
+      }
+    })
+  });
+}
+
+export async function getAvailableKeys() {
+  return _getAvailableKeys();
+}
+
+export async function sign(body, gpgKey) {
+  return _sign(body.trim(), gpgKey === undefined || gpgKey === null ? keyToSign : gpgKey);
 }
