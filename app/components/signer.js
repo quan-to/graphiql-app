@@ -5,13 +5,16 @@
 
 const exec = require('child_process').exec;
 
-const keyToSign = '870AFA59';
+const keyToSign = null;
 
 const reg = /-----BEGIN PGP SIGNATURE-----([^]*)-----END PGP SIGNATURE-----/;
 const hashReg = /Hash: (.*)/;
 
 async function getFingerPrint(gpgKey) {
   const k = gpgKey === undefined || gpgKey === null ? keyToSign : gpgKey;
+  if (k === null) {
+  	return null;
+  }
   return new Promise((resolve, reject) => {
     const child = exec(`gpg --list-keys --with-colons --fingerprint ${k} |grep pub`, (error, stdout, stderr) => {
       if (error) {
@@ -31,6 +34,9 @@ async function getFingerPrint(gpgKey) {
 
 async function _sign(body, gpgKey) {
   const fingerPrint = await getFingerPrint(gpgKey);
+  if (fingerPrint === null) {
+	return "";
+  }
   return new Promise((resolve, reject) => {
     const child = exec(`gpg -u ${fingerPrint} --clearsign`, (error, stdout, stderr) => {
       if (error) {
@@ -72,7 +78,7 @@ async function _sign(body, gpgKey) {
 
 async function _getAvailableKeys() {
   return new Promise((resolve, reject) => {
-    const child = exec('gpg --list-secret-keys  --with-colon |grep sec', (error, stdout, stderr) => {
+    const child = exec('gpg --list-secret-keys --with-colon |grep sec', (error, stdout, stderr) => {
       if (error) {
         console.log(`Error getting list of keys (${error}): ${stderr}`);
         reject(error);
