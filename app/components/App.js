@@ -181,7 +181,7 @@ export default class App extends React.Component {
 
     // Signing
     if (gpgkey !== 'none') {
-      const signatureData = await sign(graphQLParams.query, gpgkey);
+      const signatureData = await sign(JSON.stringify(graphQLParams), gpgkey);
 
       defaultHeaders.signature = [
         `${signatureData.fingerPrint}$${signatureData.hash}$${signatureData.signature}`,
