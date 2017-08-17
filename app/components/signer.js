@@ -21,6 +21,7 @@ async function getFingerPrint(gpgKey) {
         console.log(`Error getting fingerprint (${error}): ${stderr}`);
         reject(error);
       } else {
+        console.log(`gpg --list-keys output:\n${stdout}`);
         const s = stdout.split(':');
         if (s.length > 4) {
           resolve(s[4].trim());
@@ -43,6 +44,7 @@ async function _sign(body, gpgKey) {
         console.log(`Error signign data (${error}): ${stderr}`);
         reject(error);
       } else {
+        console.log(`gpg -u ${fingerPrint} --clearsign output:\n${stdout}`);
         // Grab only the signature hash
         const hash = stdout.match(hashReg);
         const rm = stdout.match(reg);
@@ -65,6 +67,7 @@ async function _sign(body, gpgKey) {
             hash: hash[1],
           });
         } else {
+          console.log('Error: Cannot find signature in stdout!');
           reject('cannot find signature on stdout');
         }
       }
@@ -83,6 +86,7 @@ async function _getAvailableKeys() {
         console.log(`Error getting list of keys (${error}): ${stderr}`);
         reject(error);
       } else {
+        console.log(`gpg --list-secret-keys --with-colon |grep sec output:\n${stdout}`);
         const keysS = stdout.trim().split('\n');
         const keys = [];
         keysS.forEach((k) => {
