@@ -61,6 +61,9 @@ async function _sign(body, gpgKey) {
               signature += l;
             }
           });
+	  if (!save) {
+	    signature = z.join(''); // MacOSX Case
+	  }
           resolve({
             signature,
             fingerPrint,
