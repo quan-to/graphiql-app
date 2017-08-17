@@ -9,10 +9,9 @@ Provides a tabbed interface for editing and testing GraphQL queries/mutations wi
 
 #### Installation
 
-If you have [Homebrew](http://brew.sh/) installed on OSX:
-
+```sh
+git clone git@github.com:quan-to/graphiql-app.git && cd graphiql-app
+yarn install
+yarn build
+yarn start
 ```
-brew cask install graphiql
-```
-
-Alternately, download the binary from the [Releases](https://github.com/skevy/graphiql-app/releases) tab.
