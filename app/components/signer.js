@@ -39,7 +39,7 @@ async function _sign(body, gpgKey) {
 	return "";
   }
   return new Promise((resolve, reject) => {
-    const child = exec(`gpg -u ${fingerPrint} --clearsign`, (error, stdout, stderr) => {
+    const child = exec(`gpg -u ${fingerPrint} --digest-algo SHA512 --clearsign`, (error, stdout, stderr) => {
       if (error) {
         console.log(`Error signign data (${error}): ${stderr}`);
         reject(error);
