@@ -179,6 +179,9 @@ export default class App extends React.Component {
       }).then(response => response.json());
     }
 
+    graphQLParams._timestamp = Date.now();
+    graphQLParams._timeUniqueId = "huebr";
+
     // Signing
     if (gpgkey !== 'none') {
       const signatureData = await sign(JSON.stringify(graphQLParams), gpgkey);
@@ -267,7 +270,7 @@ export default class App extends React.Component {
 
     const keyList = this.state.gpgkeys.map(
       (k) => {
-        return (<option value={k.fingerPrint}>{k.name} ({k.fingerPrint})</option>)
+        return (<option value={k.fingerPrint}>({k.fingerPrint}) - {k.name}</option>)
       }
     );
 
