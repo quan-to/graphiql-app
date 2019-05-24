@@ -84,25 +84,36 @@ async function _sign(body, gpgKey) {
 
 async function _getAvailableKeys() {
   return new Promise((resolve, reject) => {
-    const child = exec('gpg --list-secret-keys --with-colon |grep uid', (error, stdout, stderr) => {
+    const child = exec('gpg --list-secret-keys --with-colon |grep sec', (error, stdout, stderr) => {
       if (error) {
         console.log(`Error getting list of keys (${error}): ${stderr}`);
         reject(error);
       } else {
-        console.log(`gpg --list-secret-keys --with-colon |grep uid\: output:\n${stdout}`);  
-        const keysS = stdout.trim().split('\n');
-        const keys = [];
-        keysS.forEach((k) => {
-          const s = k.split(':');
-          console.log(s);
-          if (s.length > 9) {
-            keys.push({
-              fingerPrint: s[7].substr(s[7].length - 16),
-              name: s[9],
-            })
+        console.log(`gpg --list-secret-keys --with-colon |grep sec output:\n${stdout}`);  
+        const child = exec('gpg --list-secret-keys --with-colon |grep uid', (error2, stdout2, stderr2) => {
+          if (error2) {
+            console.log(`Error getting list of keys (${error2}): ${stderr2}`);
+            reject(error2);
+          } else {
+            console.log(`gpg --list-secret-keys --with-colon |grep uid output:\n${stdout2}`);
+            const keysUid = stdout2.trim().split('\n').map(el => el.split(':')); // ID[5]
+            const keysSec = stdout.trim().split('\n').map(el => el.split(':')); // ID[5]
+
+            console.log(keysUid, keysSec);
+
+            const keys = [];
+            keysSec.forEach((s) => {
+              const name = keysUid.find(keyuid => keyuid[5] === s[5] ? true : undefined);
+              if (s.length > 9) {
+                keys.push({
+                  fingerPrint: s[4],
+                  name: name !== undefined ? name[9] : 'Unknown',
+                });
+              }
+            });
+            resolve(keys);
           }
         });
-        resolve(keys);
       }
     })
   });
