@@ -179,6 +179,9 @@ export default class App extends React.Component {
       }).then(response => response.json());
     }
 
+    graphQLParams._timestamp = Date.now();
+    graphQLParams._timeUniqueId = "huebr";
+
     // Signing
     if (gpgkey !== 'none') {
       const signatureData = await sign(JSON.stringify(graphQLParams), gpgkey);
