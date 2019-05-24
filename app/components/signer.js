@@ -16,12 +16,12 @@ async function getFingerPrint(gpgKey) {
   	return null;
   }
   return new Promise((resolve, reject) => {
-    const child = exec(`gpg --list-keys --with-colons --fingerprint ${k} |grep pub`, (error, stdout, stderr) => {
+    const child = exec(`gpg2 --list-keys --with-colons --batch --fingerprint ${k} |grep pub`, (error, stdout, stderr) => {
       if (error) {
         console.log(`Error getting fingerprint (${error}): ${stderr}`);
         reject(error);
       } else {
-        console.log(`gpg --list-keys output:\n${stdout}`);
+        console.log(`gpg2 --list-keys --with-colons --batch --fingerprint ${k} |grep pub output:\n${stdout}`);
         const s = stdout.split(':');
         if (s.length > 4) {
           resolve(s[4].trim());
@@ -39,12 +39,12 @@ async function _sign(body, gpgKey) {
 	return "";
   }
   return new Promise((resolve, reject) => {
-    const child = exec(`gpg -u ${fingerPrint} --digest-algo SHA512 --clearsign`, (error, stdout, stderr) => {
+    const child = exec(`gpg2 -u ${fingerPrint} --batch --digest-algo SHA512 --clearsign`, (error, stdout, stderr) => {
       if (error) {
         console.log(`Error signign data (${error}): ${stderr}`);
         reject(error);
       } else {
-        console.log(`gpg -u ${fingerPrint} --clearsign output:\n${stdout}`);
+        console.log(`gpg2 -u ${fingerPrint} --clearsign output:\n${stdout}`);
         // Grab only the signature hash
         const hash = stdout.match(hashReg);
         const rm = stdout.match(reg);
@@ -61,9 +61,9 @@ async function _sign(body, gpgKey) {
               signature += l;
             }
           });
-	  if (!save) {
-	    signature = z.join(''); // MacOSX Case
-	  }
+          if (!save) {
+            signature = z.join(''); // MacOSX Case
+          }
           resolve({
             signature,
             fingerPrint,
@@ -79,6 +79,24 @@ async function _sign(body, gpgKey) {
     child.stdin.setEncoding('utf-8');
     child.stdin.write(body);
     child.stdin.end();
+  });
+}
+
+async function _getKeyName(fingerPrint) {
+  return new Promise((resolve, reject) => {
+    const child = exec(`gpg2 --list-secret-keys --with-colon "${fingerPrint}" | grep uid`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error getting list of keys (${error}): ${stderr}`);
+        reject(error);
+      } else {
+        console.log(`gpg2 --list-secret-keys --with-colon "${fingerPrint}" | grep uid output:\n${stdout}`);
+        const keysS = stdout.trim().split(':');
+        if (keysS.length > 9) {
+          return resolve(keysS[9]);
+        }
+        return resolve('Unknown');
+      }
+    })
   });
 }
 
@@ -109,7 +127,13 @@ async function _getAvailableKeys() {
 }
 
 export async function getAvailableKeys() {
-  return _getAvailableKeys();
+  const keys = await _getAvailableKeys();
+
+  for (let i = 0; i < keys.length; i++) {
+    keys[i].name = await _getKeyName(keys[i].fingerPrint);
+  }
+
+  return keys;
 }
 
 export async function sign(body, gpgKey) {
