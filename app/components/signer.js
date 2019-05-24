@@ -84,19 +84,20 @@ async function _sign(body, gpgKey) {
 
 async function _getAvailableKeys() {
   return new Promise((resolve, reject) => {
-    const child = exec('gpg --list-secret-keys --with-colon |grep sec', (error, stdout, stderr) => {
+    const child = exec('gpg --list-secret-keys --with-colon |grep uid', (error, stdout, stderr) => {
       if (error) {
         console.log(`Error getting list of keys (${error}): ${stderr}`);
         reject(error);
       } else {
-        console.log(`gpg --list-secret-keys --with-colon |grep sec output:\n${stdout}`);
+        console.log(`gpg --list-secret-keys --with-colon |grep uid\: output:\n${stdout}`);  
         const keysS = stdout.trim().split('\n');
         const keys = [];
         keysS.forEach((k) => {
           const s = k.split(':');
+          console.log(s);
           if (s.length > 9) {
             keys.push({
-              fingerPrint: s[4],
+              fingerPrint: s[7].substr(s[7].length - 16),
               name: s[9],
             })
           }

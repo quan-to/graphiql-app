@@ -267,7 +267,7 @@ export default class App extends React.Component {
 
     const keyList = this.state.gpgkeys.map(
       (k) => {
-        return (<option value={k.fingerPrint}>{k.name} ({k.fingerPrint})</option>)
+        return (<option value={k.fingerPrint}>({k.fingerPrint}) [{k.name}]</option>)
       }
     );
 
