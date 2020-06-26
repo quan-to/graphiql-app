@@ -70,7 +70,8 @@ module.exports = function(opts) {
     filename: 'bundle.js',
     publicPath: publicPath,
     contentBase: projectRoot + '/public/',
-    libraryTarget: 'commonjs2'
+    // libraryTarget: 'commonjs2'
+    target: 'electron-renderer'
   };
 
   var excludeFromStats = [
@@ -183,7 +184,7 @@ module.exports = function(opts) {
     }
   };
 
-  options.target = webpackTargetElectronRenderer(options);
+  options.target = 'electron-renderer';
 
   return options;
 };
